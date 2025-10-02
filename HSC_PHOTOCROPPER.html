@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Photo & Signature Cropper</title>
+    <style>
+        :root {
+            --indigo: #4f46e5;
+            --indigo-light: #6366f1;
+            --indigo-dark: #4338ca;
+            --teal: #0d9488;
+            --teal-light: #14b8a6;
+            --teal-dark: #0f766e;
+            --gray-light: #f8fafc;
+            --gray: #64748b;
+            --gray-dark: #334155;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f1f5f9;
+            color: var(--gray-dark);
+            line-height: 1.6;
+            padding: 16px;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--indigo), var(--teal));
+            color: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .card-title {
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            color: var(--indigo);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .upload-area {
+            border: 2px dashed var(--indigo-light);
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background-color: rgba(79, 70, 229, 0.05);
+            margin-bottom: 16px;
+        }
+        
+        .upload-area:hover {
+            background-color: rgba(79, 70, 229, 0.1);
+        }
+        
+        .upload-icon {
+            font-size: 2.5rem;
+            color: var(--indigo);
+            margin-bottom: 12px;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: var(--indigo);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .btn:hover {
+            background: var(--indigo-dark);
+        }
+        
+        .btn-teal {
+            background: var(--teal);
+        }
+        
+        .btn-teal:hover {
+            background: var(--teal-dark);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--indigo);
+            color: var(--indigo);
+        }
+        
+        .btn-outline:hover {
+            background: rgba(79, 70, 229, 0.1);
+        }
+        
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.8rem;
+        }
+        
+        .preview-container {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 16px;
+        }
+        
+        .crop-instructions {
+            background: rgba(13, 148, 136, 0.1);
+            border-left: 4px solid var(--teal);
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .crop-instructions h3 {
+            color: var(--teal);
+            margin-bottom: 8px;
+        }
+        
+        .crop-instructions ol {
+            padding-left: 20px;
+        }
+        
+        .crop-instructions li {
+            margin-bottom: 4px;
+        }
+        
+        .crop-interface {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .crop-area {
+            position: relative;
+            max-width: 100%;
+            margin: 0 auto;
+            border: 2px solid var(--indigo);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        #cropCanvas {
+            display: block;
+            max-width: 100%;
+            cursor: crosshair;
+        }
+        
+        .crop-controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .image-type-selector {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .image-type-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            background: var(--gray-light);
+            border: 1px solid var(--gray);
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .image-type-btn.active {
+            background: var(--indigo);
+            color: white;
+            border-color: var(--indigo);
+        }
+        
+        .preview-section {
+            display: none;
+            margin-top: 24px;
+        }
+        
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        
+        .preview-card {
+            background: var(--gray-light);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .preview-photo, .preview-signature {
+            width: 100%;
+            height: 120px;
+            object-fit: contain;
+            background: white;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .preview-signature {
+            height: 60px;
+        }
+        
+        .image-name {
+            font-weight: 600;
+            color: var(--indigo);
+            margin-bottom: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .download-section {
+            margin-top: 24px;
+            text-align: center;
+        }
+        
+        .download-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+        
+        .progress-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--gray-light);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 12px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--teal);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            color: var(--gray);
+            font-size: 0.8rem;
+        }
+        
+        /* Mobile adjustments */
+        @media (max-width: 480px) {
+            .preview-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .download-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 280px;
+            }
+            
+            .crop-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Manual Photo & Signature Cropper</h1>
+            <p class="subtitle">Manually crop all 18 images at once</p>
+        </header>
+        
+        <div class="card">
+            <h2 class="card-title">
+                <span>📤</span> Upload Form
+            </h2>
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📄</div>
+                <p>Click to upload scanned form or drag and drop</p>
+                <p class="subtitle" style="color: var(--gray); margin-top: 8px;">Supports JPG, PNG formats</p>
+            </div>
+            <input type="file" id="fileInput" accept=".jpg,.jpeg,.png" style="display: none;">
+            
+            <div class="preview-container" id="previewContainer">
+                <h3>Form Preview</h3>
+                <img id="previewImage" class="preview-image" alt="Form preview">
+                <button class="btn" id="startCropBtn">Start Manual Cropping</button>
+            </div>
+        </div>
+        
+        <div class="crop-instructions">
+            <h3>How to Crop All Images</h3>
+            <ol>
+                <li>Select image type (Photo P1-P9 or Signature S1-S9)</li>
+                <li>Click and drag to select the area for that image</li>
+                <li>Click "Crop This Image" to save</li>
+                <li>Continue until all 18 images are cropped</li>
+                <li>Download all images as ZIP when finished</li>
+            </ol>
+        </div>
+        
+        <div class="card crop-interface" id="cropInterface">
+            <h2 class="card-title">
+                <span>✂️</span> Manual Cropping - All Images
+            </h2>
+            
+            <div class="image-type-selector">
+                <div class="image-type-btn active" data-type="photo" data-index="1">Photo P1</div>
+                <div class="image-type-btn" data-type="photo" data-index="2">Photo P2</div>
+                <div class="image-type-btn" data-type="photo" data-index="3">Photo P3</div>
+                <div class="image-type-btn" data-type="photo" data-index="4">Photo P4</div>
+                <div class="image-type-btn" data-type="photo" data-index="5">Photo P5</div>
+                <div class="image-type-btn" data-type="photo" data-index="6">Photo P6</div>
+                <div class="image-type-btn" data-type="photo" data-index="7">Photo P7</div>
+                <div class="image-type-btn" data-type="photo" data-index="8">Photo P8</div>
+                <div class="image-type-btn" data-type="photo" data-index="9">Photo P9</div>
+            </div>
+            
+            <div class="image-type-selector">
+                <div class="image-type-btn" data-type="signature" data-index="1">Signature S1</div>
+                <div class="image-type-btn" data-type="signature" data-index="2">Signature S2</div>
+                <div class="image-type-btn" data-type="signature" data-index="3">Signature S3</div>
+                <div class="image-type-btn" data-type="signature" data-index="4">Signature S4</div>
+                <div class="image-type-btn" data-type="signature" data-index="5">Signature S5</div>
+                <div class="image-type-btn" data-type="signature" data-index="6">Signature S6</div>
+                <div class="image-type-btn" data-type="signature" data-index="7">Signature S7</div>
+                <div class="image-type-btn" data-type="signature" data-index="8">Signature S8</div>
+                <div class="image-type-btn" data-type="signature" data-index="9">Signature S9</div>
+            </div>
+            
+            <div class="crop-area">
+                <canvas id="cropCanvas"></canvas>
+            </div>
+            
+            <div class="crop-controls">
+                <button class="btn btn-teal" id="cropImageBtn">Crop This Image</button>
+                <button class="btn btn-outline" id="resetCropBtn">Reset Selection</button>
+            </div>
+            
+            <div class="progress-section">
+                <p>Progress: <span id="progressText">0/18 images cropped</span></p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+            
+            <div class="preview-section" id="previewSection">
+                <h3>Current Image Preview</h3>
+                <div style="text-align: center; margin-top: 16px;">
+                    <img id="currentImagePreview" class="preview-photo" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='120' viewBox='0 0 150 120'%3E%3Crect width='150' height='120' fill='%23f1f5f9'/%3E%3Ctext x='75' y='60' text-anchor='middle' font-family='Arial' font-size='14' fill='%2364748b'%3ENot cropped yet%3C/text%3E%3C/svg%3E" alt="Image preview">
+                    <p id="currentImageName" class="image-name">Select an image to crop</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="resultsCard" style="display: none;">
+            <h2 class="card-title">
+                <span>📷</span> All Cropped Images
+            </h2>
+            <div class="preview-grid" id="previewGrid">
+                <!-- Preview items will be generated here -->
+            </div>
+            
+            <div class="download-section">
+                <h3>Download All Files</h3>
+                <p style="margin-top: 8px; color: var(--gray);">All 18 images (P1-P9 photos + S1-S9 signatures) will be downloaded as a ZIP file</p>
+                <div class="download-buttons">
+                    <button class="btn btn-teal" id="downloadAllBtn">Download All Images as ZIP</button>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Maharashtra State Board of Secondary and Higher Secondary Education</p>
+            <p>Form Processing Tool &copy; 2023</p>
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const previewContainer = document.getElementById('previewContainer');
+            const previewImage = document.getElementById('previewImage');
+            const startCropBtn = document.getElementById('startCropBtn');
+            const cropInterface = document.getElementById('cropInterface');
+            const cropCanvas = document.getElementById('cropCanvas');
+            const ctx = cropCanvas.getContext('2d');
+            const imageTypeButtons = document.querySelectorAll('.image-type-btn');
+            const cropImageBtn = document.getElementById('cropImageBtn');
+            const resetCropBtn = document.getElementById('resetCropBtn');
+            const progressText = document.getElementById('progressText');
+            const progressFill = document.getElementById('progressFill');
+            const previewSection = document.getElementById('previewSection');
+            const currentImagePreview = document.getElementById('currentImagePreview');
+            const currentImageName = document.getElementById('currentImageName');
+            const resultsCard = document.getElementById('resultsCard');
+            const previewGrid = document.getElementById('previewGrid');
+            const downloadAllBtn = document.getElementById('downloadAllBtn');
+            
+            // State variables
+            let originalImage = null;
+            let currentImageType = 'photo';
+            let currentImageIndex = 1;
+            let isDrawing = false;
+            let startX, startY, endX, endY;
+            let cropSelection = null;
+            let croppedImages = {
+                photos: {
+                    1: null, 2: null, 3: null, 4: null, 5: null,
+                    6: null, 7: null, 8: null, 9: null
+                },
+                signatures: {
+                    1: null, 2: null, 3: null, 4: null, 5: null,
+                    6: null, 7: null, 8: null, 9: null
+                }
+            };
+            
+            // Upload area click handler
+            uploadArea.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            // Drag and drop functionality
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.style.backgroundColor = 'rgba(79, 70, 229, 0.15)';
+            });
+            
+            uploadArea.addEventListener('dragleave', function() {
+                uploadArea.style.backgroundColor = 'rgba(79, 70, 229, 0.05)';
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.style.backgroundColor = 'rgba(79, 70, 229, 0.05)';
+                
+                if (e.dataTransfer.files.length) {
+                    handleFile(e.dataTransfer.files[0]);
+                }
+            });
+            
+            // File input change handler
+            fileInput.addEventListener('change', function() {
+                if (fileInput.files.length) {
+                    handleFile(fileInput.files[0]);
+                }
+            });
+            
+            // Start cropping button
+            startCropBtn.addEventListener('click', function() {
+                if (!originalImage) {
+                    alert('Please upload an image first');
+                    return;
+                }
+                
+                previewContainer.style.display = 'none';
+                cropInterface.style.display = 'block';
+                setupCanvas();
+                updateProgress();
+                updateCurrentPreview();
+            });
+            
+            // Image type selection
+            imageTypeButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    imageTypeButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    currentImageType = this.getAttribute('data-type');
+                    currentImageIndex = parseInt(this.getAttribute('data-index'));
+                    
+                    updateCurrentPreview();
+                });
+            });
+            
+            // Crop button
+            cropImageBtn.addEventListener('click', function() {
+                if (!cropSelection) {
+                    alert('Please select an area first by clicking and dragging on the image');
+                    return;
+                }
+                
+                const croppedImage = cropImage(cropSelection);
+                
+                if (currentImageType === 'photo') {
+                    croppedImages.photos[currentImageIndex] = croppedImage;
+                } else {
+                    croppedImages.signatures[currentImageIndex] = croppedImage;
+                }
+                
+                updateProgress();
+                updateCurrentPreview();
+                updatePreviewGrid();
+                
+                // Auto-select next uncropped image
+                autoSelectNextImage();
+            });
+            
+            resetCropBtn.addEventListener('click', function() {
+                cropSelection = null;
+                drawCanvas();
+            });
+            
+            // Download button
+            downloadAllBtn.addEventListener('click', function() {
+                downloadAllImages();
+            });
+            
+            // Canvas event listeners for manual selection
+            cropCanvas.addEventListener('mousedown', startSelection);
+            cropCanvas.addEventListener('mousemove', drawSelection);
+            cropCanvas.addEventListener('mouseup', endSelection);
+            
+            // Touch events for mobile
+            cropCanvas.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousedown', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                cropCanvas.dispatchEvent(mouseEvent);
+            });
+            
+            cropCanvas.addEventListener('touchmove', function(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousemove', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                cropCanvas.dispatchEvent(mouseEvent);
+            });
+            
+            cropCanvas.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                const mouseEvent = new MouseEvent('mouseup', {});
+                cropCanvas.dispatchEvent(mouseEvent);
+            });
+            
+            // Functions
+            function handleFile(file) {
+                if (file.type.match('image.*')) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        previewImage.src = e.target.result;
+                        previewContainer.style.display = 'block';
+                        
+                        originalImage = new Image();
+                        originalImage.onload = function() {
+                            // Image is loaded, ready for cropping
+                        };
+                        originalImage.src = e.target.result;
+                    };
+                    
+                    reader.readAsDataURL(file);
+                } else {
+                    alert('Please upload an image file (JPG or PNG)');
+                }
+            }
+            
+            function setupCanvas() {
+                if (!originalImage) return;
+                
+                // Set canvas dimensions to match image but with max width for mobile
+                const maxWidth = Math.min(originalImage.width, window.innerWidth - 40);
+                const scale = maxWidth / originalImage.width;
+                
+                cropCanvas.width = maxWidth;
+                cropCanvas.height = originalImage.height * scale;
+                
+                // Draw the image on canvas
+                ctx.drawImage(originalImage, 0, 0, cropCanvas.width, cropCanvas.height);
+                
+                // Show preview section
+                previewSection.style.display = 'block';
+            }
+            
+            function drawCanvas() {
+                if (!originalImage) return;
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, cropCanvas.width, cropCanvas.height);
+                
+                // Draw the image
+                ctx.drawImage(originalImage, 0, 0, cropCanvas.width, cropCanvas.height);
+                
+                // Draw selection rectangle if exists
+                if (cropSelection) {
+                    ctx.strokeStyle = '#4f46e5';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.strokeRect(
+                        cropSelection.x, 
+                        cropSelection.y, 
+                        cropSelection.width, 
+                        cropSelection.height
+                    );
+                    
+                    ctx.fillStyle = 'rgba(79, 70, 229, 0.1)';
+                    ctx.fillRect(
+                        cropSelection.x, 
+                        cropSelection.y, 
+                        cropSelection.width, 
+                        cropSelection.height
+                    );
+                    
+                    ctx.setLineDash([]);
+                }
+            }
+            
+            function startSelection(e) {
+                isDrawing = true;
+                const rect = cropCanvas.getBoundingClientRect();
+                startX = e.clientX - rect.left;
+                startY = e.clientY - rect.top;
+                
+                cropSelection = {
+                    x: startX,
+                    y: startY,
+                    width: 0,
+                    height: 0
+                };
+            }
+            
+            function drawSelection(e) {
+                if (!isDrawing) return;
+                
+                const rect = cropCanvas.getBoundingClientRect();
+                endX = e.clientX - rect.left;
+                endY = e.clientY - rect.top;
+                
+                cropSelection.width = endX - startX;
+                cropSelection.height = endY - startY;
+                
+                drawCanvas();
+            }
+            
+            function endSelection() {
+                isDrawing = false;
+            }
+            
+            function cropImage(selection) {
+                // Create a temporary canvas to extract the selected region
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // Ensure selection coordinates are valid
+                const x = Math.max(0, selection.x);
+                const y = Math.max(0, selection.y);
+                const width = Math.min(cropCanvas.width - x, Math.abs(selection.width));
+                const height = Math.min(cropCanvas.height - y, Math.abs(selection.height));
+                
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+                
+                // Draw the selected region to the temporary canvas
+                tempCtx.drawImage(
+                    cropCanvas,
+                    x, y, width, height,
+                    0, 0, width, height
+                );
+                
+                // Return the data URL of the cropped image
+                return tempCanvas.toDataURL('image/jpeg', 0.9);
+            }
+            
+            function updateProgress() {
+                let completed = 0;
+                const total = 18;
+                
+                // Count completed photos
+                for (let i = 1; i <= 9; i++) {
+                    if (croppedImages.photos[i]) completed++;
+                    if (croppedImages.signatures[i]) completed++;
+                }
+                
+                progressText.textContent = `${completed}/${total} images cropped`;
+                progressFill.style.width = `${(completed / total) * 100}%`;
+                
+                // Show results when all images are cropped
+                if (completed === total) {
+                    resultsCard.style.display = 'block';
+                }
+            }
+            
+            function updateCurrentPreview() {
+                const imageName = currentImageType === 'photo' ? `P${currentImageIndex}` : `S${currentImageIndex}`;
+                currentImageName.textContent = imageName;
+                
+                const currentImage = currentImageType === 'photo' 
+                    ? croppedImages.photos[currentImageIndex] 
+                    : croppedImages.signatures[currentImageIndex];
+                
+                if (currentImage) {
+                    currentImagePreview.src = currentImage;
+                } else {
+                    currentImagePreview.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='120' viewBox='0 0 150 120'%3E%3Crect width='150' height='120' fill='%23f1f5f9'/%3E%3Ctext x='75' y='60' text-anchor='middle' font-family='Arial' font-size='14' fill='%2364748b'%3ENot cropped yet%3C/text%3E%3C/svg%3E";
+                }
+            }
+            
+            function autoSelectNextImage() {
+                // First check if there are uncropped photos
+                for (let i = 1; i <= 9; i++) {
+                    if (!croppedImages.photos[i]) {
+                        const btn = document.querySelector(`.image-type-btn[data-type="photo"][data-index="${i}"]`);
+                        if (btn) {
+                            btn.click();
+                            return;
+                        }
+                    }
+                }
+                
+                // Then check for uncropped signatures
+                for (let i = 1; i <= 9; i++) {
+                    if (!croppedImages.signatures[i]) {
+                        const btn = document.querySelector(`.image-type-btn[data-type="signature"][data-index="${i}"]`);
+                        if (btn) {
+                            btn.click();
+                            return;
+                        }
+                    }
+                }
+            }
+            
+            function updatePreviewGrid() {
+                previewGrid.innerHTML = '';
+                
+                // Add photos
+                for (let i = 1; i <= 9; i++) {
+                    const previewCard = document.createElement('div');
+                    previewCard.className = 'preview-card';
+                    
+                    let imageSrc = croppedImages.photos[i] || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='120' viewBox='0 0 150 120'%3E%3Crect width='150' height='120' fill='%23f1f5f9'/%3E%3Ctext x='75' y='60' text-anchor='middle' font-family='Arial' font-size='14' fill='%2364748b'%3ENot cropped%3C/text%3E%3C/svg%3E";
+                    
+                    previewCard.innerHTML = `
+                        <div class="image-name">P${i}</div>
+                        <img class="preview-photo" src="${imageSrc}" alt="Photo P${i}">
+                    `;
+                    
+                    previewGrid.appendChild(previewCard);
+                }
+                
+                // Add signatures
+                for (let i = 1; i <= 9; i++) {
+                    const previewCard = document.createElement('div');
+                    previewCard.className = 'preview-card';
+                    
+                    let imageSrc = croppedImages.signatures[i] || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='60' viewBox='0 0 150 60'%3E%3Crect width='150' height='60' fill='%23f1f5f9'/%3E%3Ctext x='75' y='30' text-anchor='middle' font-family='Arial' font-size='12' fill='%2364748b'%3ENot cropped%3C/text%3E%3C/svg%3E";
+                    
+                    previewCard.innerHTML = `
+                        <div class="image-name">S${i}</div>
+                        <img class="preview-signature" src="${imageSrc}" alt="Signature S${i}">
+                    `;
+                    
+                    previewGrid.appendChild(previewCard);
+                }
+            }
+            
+            function downloadAllImages() {
+                // Create a zip file with all images
+                const zip = new JSZip();
+                
+                // Add photos
+                for (let i = 1; i <= 9; i++) {
+                    if (croppedImages.photos[i]) {
+                        const photoData = croppedImages.photos[i].split(',')[1];
+                        zip.file(`p${i}.jpg`, photoData, {base64: true});
+                    }
+                }
+                
+                // Add signatures
+                for (let i = 1; i <= 9; i++) {
+                    if (croppedImages.signatures[i]) {
+                        const signatureData = croppedImages.signatures[i].split(',')[1];
+                        zip.file(`s${i}.jpg`, signatureData, {base64: true});
+                    }
+                }
+                
+                // Generate and download the zip file
+                zip.generateAsync({type: "blob"}).then(function(content) {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(content);
+                    link.download = 'candidate_images.zip';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
