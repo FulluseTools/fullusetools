@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>एसएससी फोटो आणि स्वाक्षरी क्रॉपर टूल</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Nirmala UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            width: 95%;
+            max-width: 1400px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        header {
+            background: linear-gradient(90deg, #1a2a6c 0%, #2a5298 50%, #3a7bd5 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" opacity="0.1"><path d="M10,10 L90,10 L90,90 L10,90 Z" fill="none" stroke="white" stroke-width="2"/></svg>');
+            background-size: 50px 50px;
+        }
+        
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+            position: relative;
+        }
+        
+        .content {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .upload-section, .crop-section {
+            background: linear-gradient(145deg, #f0f4ff, #e6ecff);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .upload-section:hover, .crop-section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+        }
+        
+        h2 {
+            color: #1a2a6c;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid rgba(26, 42, 108, 0.2);
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        h2 i {
+            font-size: 26px;
+        }
+        
+        .upload-area {
+            border: 3px dashed #3a7bd5;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.7);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .upload-area::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+            transition: left 0.5s;
+        }
+        
+        .upload-area:hover::before {
+            left: 100%;
+        }
+        
+        .upload-area:hover {
+            background-color: #f8fbff;
+            border-color: #1a2a6c;
+        }
+        
+        .upload-icon {
+            font-size: 60px;
+            color: #3a7bd5;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+        }
+        
+        .upload-area p {
+            font-size: 18px;
+            color: #555;
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            margin-top: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            display: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.8);
+        }
+        
+        .image-preview img {
+            max-width: 100%;
+            display: block;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 16px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s;
+        }
+        
+        button:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, #1a2a6c 0%, #2a5298 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(26, 42, 108, 0.4);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(90deg, #6c757d 0%, #868e96 100%);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(108, 117, 125, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(40, 167, 69, 0.4);
+        }
+        
+        .selection-info {
+            margin-top: 25px;
+            padding: 20px;
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border-radius: 10px;
+            border-left: 5px solid #1a2a6c;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .selection-info h3 {
+            margin-bottom: 15px;
+            color: #1a2a6c;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .counter {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding: 8px 0;
+            border-bottom: 1px dashed rgba(26, 42, 108, 0.2);
+        }
+        
+        .counter span {
+            font-weight: 600;
+            font-size: 17px;
+        }
+        
+        .counter span:last-child {
+            color: #1a2a6c;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 4px 12px;
+            border-radius: 20px;
+            min-width: 40px;
+            text-align: center;
+        }
+        
+        .crop-canvas-container {
+            position: relative;
+            margin-top: 20px;
+            overflow: auto;
+            max-height: 500px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
+            background: #f9f9f9;
+        }
+        
+        #cropCanvas {
+            display: block;
+            max-width: 100%;
+        }
+        
+        .download-section {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid rgba(40, 167, 69, 0.2);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .download-section h2 {
+            justify-content: center;
+            color: #2e7d32;
+            border-bottom-color: rgba(46, 125, 50, 0.2);
+        }
+        
+        .instructions {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            border-radius: 15px;
+            border-left: 5px solid #ff9800;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .instructions h3 {
+            color: #e65100;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .instructions ol {
+            margin-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 12px;
+            line-height: 1.6;
+            font-size: 16px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 25px;
+            margin-top: 30px;
+            color: #666;
+            font-size: 15px;
+            background: rgba(0, 0, 0, 0.03);
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .selection-rectangle {
+            position: absolute;
+            border: 2px dashed red;
+            background-color: rgba(255, 0, 0, 0.1);
+            pointer-events: none;
+        }
+        
+        .mode-selector {
+            display: flex;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #ddd;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+        
+        .mode-btn {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background: linear-gradient(145deg, #f0f0f0, #e0e0e0);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .mode-btn.active {
+            background: linear-gradient(145deg, #1a2a6c, #2a5298);
+            color: white;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .mode-btn:not(.active):hover {
+            background: linear-gradient(145deg, #e0e0e0, #d0d0d0);
+        }
+        
+        .cropped-previews {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .preview-item {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            background: white;
+            transition: all 0.3s;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+        }
+        
+        .preview-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-color: #3a7bd5;
+        }
+        
+        .preview-item img {
+            max-width: 100%;
+            max-height: 120px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+        }
+        
+        .preview-item span {
+            font-size: 14px;
+            color: #555;
+            font-weight: 600;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .quality-note {
+            text-align: center;
+            margin-top: 15px;
+            font-style: italic;
+            color: #28a745;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 14px;
+            font-weight: normal;
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .highlight {
+            background: linear-gradient(120deg, #a8edea 0%, #fed6e3 100%);
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-id-card"></i> महाराष्ट्र राज्य माध्यमिक आणि उच्च माध्यमिक शिक्षण मंडळ</h1>
+            <p class="subtitle">HD फोटो आणि स्वाक्षरी क्रॉपर टूल</p>
+        </header>
+        
+        <div class="content">
+            <div class="upload-section">
+                <h2><i class="fas fa-cloud-upload-alt"></i> HD इमेज अपलोड करा</h2>
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon"><i class="fas fa-file-image"></i></div>
+                    <p>HD इमेज अपलोड करण्यासाठी येथे क्लिक करा किंवा ड्रॅग करा</p>
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                </div>
+                
+                <div class="image-preview" id="imagePreview">
+                    <img id="previewImg" src="" alt="Uploaded Image Preview">
+                </div>
+                
+                <div class="quality-note">
+                    <i class="fas fa-check-circle"></i> HD क्वालिटीमध्ये क्रॉप केले जाईल
+                </div>
+                
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress" id="progress"></div>
+                </div>
+                
+                <div class="controls">
+                    <button class="btn-primary" id="resetBtn">
+                        <i class="fas fa-redo"></i> रीसेट करा
+                    </button>
+                </div>
+            </div>
+            
+            <div class="crop-section">
+                <h2><i class="fas fa-crop-alt"></i> फोटो आणि स्वाक्षरी निवडा</h2>
+                
+                <div class="mode-selector">
+                    <div class="mode-btn active" id="photoModeBtn">
+                        <i class="fas fa-user-circle"></i> फोटो निवडा (0/9)
+                    </div>
+                    <div class="mode-btn" id="signatureModeBtn">
+                        <i class="fas fa-signature"></i> स्वाक्षरी निवडा (0/9)
+                    </div>
+                </div>
+                
+                <div class="crop-canvas-container">
+                    <canvas id="cropCanvas"></canvas>
+                </div>
+                
+                <div class="selection-info">
+                    <h3><i class="fas fa-info-circle"></i> निवड माहिती</h3>
+                    <div class="counter">
+                        <span>फोटो निवडले:</span>
+                        <span id="photosSelected">0</span>
+                    </div>
+                    <div class="counter">
+                        <span>स्वाक्षरी निवडले:</span>
+                        <span id="signaturesSelected">0</span>
+                    </div>
+                    <p style="margin-top: 10px; font-style: italic;">निवड करण्यासाठी इमेजवर क्लिक करून आयत ड्रॅग करा</p>
+                </div>
+                
+                <div class="controls">
+                    <button class="btn-secondary" id="clearSelectionsBtn">
+                        <i class="fas fa-trash-alt"></i> सर्व निवडी रद्द करा
+                    </button>
+                    <button class="btn-success" id="downloadBtn">
+                        <i class="fas fa-download"></i> सर्व HD फाइल्स डाउनलोड करा
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="download-section">
+            <h2><i class="fas fa-eye"></i> क्रॉप केलेल्या HD फाइल्सची झलक</h2>
+            <div class="cropped-previews" id="croppedPreviews">
+                <!-- Cropped previews will be added here -->
+            </div>
+            <div class="quality-note">
+                <i class="fas fa-hd"></i> सर्व फाइल्स HD क्वालिटीमध्ये डाउनलोड होतील
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3><i class="fas fa-graduation-cap"></i> वापर सूचना</h3>
+            <ol>
+                <li>वरील अपलोड एरियामध्ये <span class="highlight">HD इमेज</span> अपलोड करा</li>
+                <li>फोटो किंवा स्वाक्षरी निवडण्यासाठी वरील मोड बटण वापरा</li>
+                <li>इमेजवर क्लिक करून आणि ड्रॅग करून आयत निवडा</li>
+                <li><span class="highlight">9 फोटो</span> आणि <span class="highlight">9 स्वाक्षऱ्या</span> निवडल्यानंतर डाउनलोड बटण वापरा</li>
+                <li>सर्व फाइल्स <span class="highlight">HD क्वालिटी</span>मध्ये एका फोल्डरमध्ये डाउनलोड होतील</li>
+            </ol>
+        </div>
+        
+        <footer>
+            <p>महाराष्ट्र राज्य माध्यमिक आणि उच्च माध्यमिक शिक्षण मंडळासाठी विकसित</p>
+            <p>© 2023 सर्व हक्क राखीव | HD क्वालिटी इमेज प्रोसेसिंग</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const uploadArea = document.getElementById('uploadArea');
+            const imageInput = document.getElementById('imageInput');
+            const imagePreview = document.getElementById('imagePreview');
+            const previewImg = document.getElementById('previewImg');
+            const resetBtn = document.getElementById('resetBtn');
+            const cropCanvas = document.getElementById('cropCanvas');
+            const ctx = cropCanvas.getContext('2d');
+            const photoModeBtn = document.getElementById('photoModeBtn');
+            const signatureModeBtn = document.getElementById('signatureModeBtn');
+            const photosSelected = document.getElementById('photosSelected');
+            const signaturesSelected = document.getElementById('signaturesSelected');
+            const clearSelectionsBtn = document.getElementById('clearSelectionsBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const croppedPreviews = document.getElementById('croppedPreviews');
+            const progressBar = document.getElementById('progressBar');
+            const progress = document.getElementById('progress');
+            
+            // State variables
+            let originalImage = null;
+            let isDrawing = false;
+            let startX, startY;
+            let currentRect = null;
+            let currentMode = 'photo'; // 'photo' or 'signature'
+            let photoSelections = [];
+            let signatureSelections = [];
+            let scaleFactor = 1;
+            
+            // Event listeners
+            uploadArea.addEventListener('click', () => imageInput.click());
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.style.backgroundColor = '#f0f8ff';
+            });
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.style.backgroundColor = '';
+            });
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.style.backgroundColor = '';
+                if (e.dataTransfer.files.length) {
+                    imageInput.files = e.dataTransfer.files;
+                    handleImageUpload();
+                }
+            });
+            
+            imageInput.addEventListener('change', handleImageUpload);
+            resetBtn.addEventListener('click', resetTool);
+            photoModeBtn.addEventListener('click', () => setMode('photo'));
+            signatureModeBtn.addEventListener('click', () => setMode('signature'));
+            clearSelectionsBtn.addEventListener('click', clearSelections);
+            downloadBtn.addEventListener('click', downloadAll);
+            
+            // Canvas event listeners for drawing selections
+            cropCanvas.addEventListener('mousedown', startDrawing);
+            cropCanvas.addEventListener('mousemove', draw);
+            cropCanvas.addEventListener('mouseup', stopDrawing);
+            cropCanvas.addEventListener('mouseleave', stopDrawing);
+            
+            // Handle image upload with progress simulation
+            function handleImageUpload() {
+                if (!imageInput.files.length) return;
+                
+                // Show progress bar
+                progressBar.style.display = 'block';
+                progress.style.width = '0%';
+                
+                const file = imageInput.files[0];
+                const reader = new FileReader();
+                
+                // Simulate progress for better UX
+                let progressValue = 0;
+                const progressInterval = setInterval(() => {
+                    progressValue += 5;
+                    progress.style.width = `${progressValue}%`;
+                    if (progressValue >= 90) clearInterval(progressInterval);
+                }, 50);
+                
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                    
+                    // Load image to canvas
+                    originalImage = new Image();
+                    originalImage.onload = function() {
+                        // Complete progress
+                        progress.style.width = '100%';
+                        setTimeout(() => {
+                            progressBar.style.display = 'none';
+                        }, 500);
+                        
+                        // Calculate scale to fit canvas while maintaining aspect ratio
+                        const maxWidth = 800;
+                        const maxHeight = 600;
+                        
+                        let width = originalImage.width;
+                        let height = originalImage.height;
+                        
+                        if (width > maxWidth) {
+                            scaleFactor = maxWidth / width;
+                            width = maxWidth;
+                            height = height * scaleFactor;
+                        }
+                        
+                        if (height > maxHeight) {
+                            scaleFactor = maxHeight / originalImage.height;
+                            height = maxHeight;
+                            width = originalImage.width * scaleFactor;
+                        }
+                        
+                        cropCanvas.width = width;
+                        cropCanvas.height = height;
+                        
+                        // Use high-quality image rendering
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+                        
+                        ctx.drawImage(originalImage, 0, 0, width, height);
+                    };
+                    originalImage.src = e.target.result;
+                };
+                
+                reader.readAsDataURL(file);
+            }
+            
+            // Set selection mode
+            function setMode(mode) {
+                currentMode = mode;
+                photoModeBtn.classList.toggle('active', mode === 'photo');
+                signatureModeBtn.classList.toggle('active', mode === 'signature');
+                
+                // Update button texts
+                photoModeBtn.innerHTML = `<i class="fas fa-user-circle"></i> फोटो निवडा (${photoSelections.length}/9)`;
+                signatureModeBtn.innerHTML = `<i class="fas fa-signature"></i> स्वाक्षरी निवडा (${signatureSelections.length}/9)`;
+            }
+            
+            // Start drawing selection rectangle
+            function startDrawing(e) {
+                if (!originalImage) return;
+                
+                isDrawing = true;
+                const rect = cropCanvas.getBoundingClientRect();
+                startX = e.clientX - rect.left;
+                startY = e.clientY - rect.top;
+                
+                // Create a temporary rectangle
+                currentRect = {
+                    x: startX,
+                    y: startY,
+                    width: 0,
+                    height: 0,
+                    mode: currentMode
+                };
+            }
+            
+            // Draw selection rectangle
+            function draw(e) {
+                if (!isDrawing || !currentRect) return;
+                
+                const rect = cropCanvas.getBoundingClientRect();
+                const currentX = e.clientX - rect.left;
+                const currentY = e.clientY - rect.top;
+                
+                currentRect.width = currentX - startX;
+                currentRect.height = currentY - startY;
+                
+                // Redraw canvas with current rectangle
+                redrawCanvas();
+            }
+            
+            // Stop drawing and save selection
+            function stopDrawing() {
+                if (!isDrawing || !currentRect) return;
+                
+                isDrawing = false;
+                
+                // Only save if rectangle has reasonable size
+                if (Math.abs(currentRect.width) > 10 && Math.abs(currentRect.height) > 10) {
+                    // Normalize rectangle coordinates
+                    if (currentRect.width < 0) {
+                        currentRect.x += currentRect.width;
+                        currentRect.width = Math.abs(currentRect.width);
+                    }
+                    if (currentRect.height < 0) {
+                        currentRect.y += currentRect.height;
+                        currentRect.height = Math.abs(currentRect.height);
+                    }
+                    
+                    // Add to appropriate array
+                    if (currentMode === 'photo' && photoSelections.length < 9) {
+                        photoSelections.push({...currentRect});
+                        photosSelected.textContent = photoSelections.length;
+                    } else if (currentMode === 'signature' && signatureSelections.length < 9) {
+                        signatureSelections.push({...currentRect});
+                        signaturesSelected.textContent = signatureSelections.length;
+                    }
+                    
+                    // Update mode buttons
+                    setMode(currentMode);
+                    
+                    // Update previews
+                    updatePreviews();
+                }
+                
+                currentRect = null;
+                redrawCanvas();
+            }
+            
+            // Redraw canvas with image and selections
+            function redrawCanvas() {
+                if (!originalImage) return;
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, cropCanvas.width, cropCanvas.height);
+                
+                // Draw original image with high quality
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(originalImage, 0, 0, cropCanvas.width, cropCanvas.height);
+                
+                // Draw all saved selections
+                drawSelections(photoSelections, '#1a2a6c');
+                drawSelections(signatureSelections, '#28a745');
+                
+                // Draw current temporary selection
+                if (currentRect) {
+                    drawSelection(currentRect, '#ff0000');
+                }
+            }
+            
+            // Draw a selection rectangle
+            function drawSelection(rect, color) {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+                
+                ctx.fillStyle = color + '20'; // Add transparency
+                ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+                
+                // Reset line dash
+                ctx.setLineDash([]);
+                
+                // Add label
+                ctx.fillStyle = color;
+                ctx.font = 'bold 14px Arial';
+                ctx.fillText(
+                    rect.mode === 'photo' ? `फोटो ${photoSelections.length + 1}` : `स्वाक्षरी ${signatureSelections.length + 1}`,
+                    rect.x + 5, 
+                    rect.y + 15
+                );
+            }
+            
+            // Draw all selections of a type
+            function drawSelections(selections, color) {
+                selections.forEach((rect, index) => {
+                    drawSelection({...rect, index}, color);
+                });
+            }
+            
+            // Clear all selections
+            function clearSelections() {
+                photoSelections = [];
+                signatureSelections = [];
+                photosSelected.textContent = '0';
+                signaturesSelected.textContent = '0';
+                setMode(currentMode);
+                redrawCanvas();
+                updatePreviews();
+            }
+            
+            // Update cropped previews
+            function updatePreviews() {
+                croppedPreviews.innerHTML = '';
+                
+                // Add photo previews
+                photoSelections.forEach((rect, index) => {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'preview-item';
+                    
+                    const img = document.createElement('img');
+                    img.src = getCroppedImageDataURL(rect);
+                    img.alt = `फोटो ${index + 1}`;
+                    
+                    const label = document.createElement('span');
+                    label.textContent = `फोटो ${index + 1}`;
+                    
+                    previewItem.appendChild(img);
+                    previewItem.appendChild(label);
+                    croppedPreviews.appendChild(previewItem);
+                });
+                
+                // Add signature previews
+                signatureSelections.forEach((rect, index) => {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'preview-item';
+                    
+                    const img = document.createElement('img');
+                    img.src = getCroppedImageDataURL(rect);
+                    img.alt = `स्वाक्षरी ${index + 1}`;
+                    
+                    const label = document.createElement('span');
+                    label.textContent = `स्वाक्षरी ${index + 1}`;
+                    
+                    previewItem.appendChild(img);
+                    previewItem.appendChild(label);
+                    croppedPreviews.appendChild(previewItem);
+                });
+            }
+            
+            // Get data URL for a cropped image with HD quality
+            function getCroppedImageDataURL(rect) {
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // Calculate original coordinates (reverse scale)
+                const originalX = rect.x / scaleFactor;
+                const originalY = rect.y / scaleFactor;
+                const originalWidth = rect.width / scaleFactor;
+                const originalHeight = rect.height / scaleFactor;
+                
+                tempCanvas.width = originalWidth;
+                tempCanvas.height = originalHeight;
+                
+                // Use high-quality rendering
+                tempCtx.imageSmoothingEnabled = true;
+                tempCtx.imageSmoothingQuality = 'high';
+                
+                tempCtx.drawImage(
+                    originalImage,
+                    originalX, originalY, originalWidth, originalHeight,
+                    0, 0, originalWidth, originalHeight
+                );
+                
+                return tempCanvas.toDataURL('image/png', 1.0); // Maximum quality
+            }
+            
+            // Download all cropped images
+            function downloadAll() {
+                if (photoSelections.length === 0 && signatureSelections.length === 0) {
+                    alert('कृपया किमान एक फोटो किंवा स्वाक्षरी निवडा!');
+                    return;
+                }
+                
+                // Show progress for download
+                progressBar.style.display = 'block';
+                progress.style.width = '0%';
+                
+                let downloaded = 0;
+                const total = photoSelections.length + signatureSelections.length;
+                
+                // Download photos
+                photoSelections.forEach((rect, index) => {
+                    setTimeout(() => {
+                        const link = document.createElement('a');
+                        link.download = `HD_photo_${index + 1}.png`;
+                        link.href = getCroppedImageDataURL(rect);
+                        link.click();
+                        
+                        downloaded++;
+                        progress.style.width = `${(downloaded / total) * 100}%`;
+                        
+                        if (downloaded === total) {
+                            setTimeout(() => {
+                                progressBar.style.display = 'none';
+                                alert(`एकूण ${photoSelections.length} HD फोटो आणि ${signatureSelections.length} HD स्वाक्षरी डाउनलोड केल्या गेल्या!`);
+                            }, 500);
+                        }
+                    }, index * 300);
+                });
+                
+                // Download signatures
+                signatureSelections.forEach((rect, index) => {
+                    setTimeout(() => {
+                        const link = document.createElement('a');
+                        link.download = `HD_signature_${index + 1}.png`;
+                        link.href = getCroppedImageDataURL(rect);
+                        link.click();
+                        
+                        downloaded++;
+                        progress.style.width = `${(downloaded / total) * 100}%`;
+                        
+                        if (downloaded === total) {
+                            setTimeout(() => {
+                                progressBar.style.display = 'none';
+                            }, 500);
+                        }
+                    }, (photoSelections.length + index) * 300);
+                });
+            }
+            
+            // Reset the entire tool
+            function resetTool() {
+                originalImage = null;
+                imageInput.value = '';
+                imagePreview.style.display = 'none';
+                previewImg.src = '';
+                ctx.clearRect(0, 0, cropCanvas.width, cropCanvas.height);
+                clearSelections();
+                progressBar.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
